@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Dyndns": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
