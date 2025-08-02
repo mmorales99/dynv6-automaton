@@ -1,0 +1,891 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "REST API for dynv6",
+    "description": "This is a preview of our HTTP [REST][] API for dynv6.com. Currently,\nwe're supporting updates to zones and records (which should cover the\nbulk of use cases).\n\nFeel free to drop us a note if you find a bug or if you miss a feature.\n\n[REST]: https://en.wikipedia.org/wiki/Representational_state_transfer\n",
+    "version": "0.2.0",
+    "contact": {
+      "email": "kontakt@digineo.de",
+      "url": "https://dynv6.com"
+    },
+    "x-logo": {
+      "url": "https://dynv6.github.io/api-spec/dynv6.png",
+      "altText": "dynv6 logo"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://dynv6.com/api/v2"
+    }
+  ],
+  "tags": [
+    {
+      "name": "records"
+    },
+    {
+      "name": "zones"
+    }
+  ],
+  "paths": {
+    "/zones": {
+      "get": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Get a list of zones",
+        "description": "Returns a list of zones that the user has access to.\n",
+        "operationId": "findZones",
+        "responses": {
+          "200": {
+            "description": "List of zones\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/zone_Zone"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Register a new zone",
+        "description": "Registers a new zone for the current user.\n",
+        "operationId": "addZone",
+        "requestBody": {
+          "description": "Zone to register\n",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewZone"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created zone\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/zone_Zone"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "422": {
+            "description": "Error: Field value validation failed\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/zones/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "ID of the zone to delete",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Get details of a zone",
+        "description": "Returns details of a specific zone by its ID that the current user has access to.\n",
+        "operationId": "getZoneByID",
+        "responses": {
+          "200": {
+            "description": "zone response.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/zone_Zone"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Update an existing zone",
+        "description": "Updates a single zone based on the ID supplied and owned by the current user.\n",
+        "operationId": "updateZone",
+        "requestBody": {
+          "description": "Fields to update on the given zone.\n",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/zone_Zone"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zone was updated successfully\n"
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Zone not found\n"
+          },
+          "422": {
+            "description": "Error: Field value validation failed\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Delete the zone",
+        "description": "Deletes a single zone and all associated records based on the ID supplied.\n",
+        "operationId": "deleteZone",
+        "responses": {
+          "204": {
+            "description": "Zone was successfully deleted\n"
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/zones/by-name/{name}": {
+      "get": {
+        "tags": [
+          "zones"
+        ],
+        "summary": "Get details of a zone by its name",
+        "description": "Returns details of a specific zone by its name that the current user has access to.\n",
+        "operationId": "getZoneByName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "name of the zone to fetch",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "hostname"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone response\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/zone_Zone"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/zones/{zoneID}/records": {
+      "parameters": [
+        {
+          "name": "zoneID",
+          "in": "path",
+          "description": "ID of the parent zone to fetch the records for",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Get a list of records",
+        "description": "Returns a list of records for the given zone by its ID and is owned by the current user.\n",
+        "operationId": "findRecords",
+        "responses": {
+          "200": {
+            "description": "List of records\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordRead"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Add a new record",
+        "description": "Adds a new record to the given zone owned by the current user.\n",
+        "operationId": "addRecord",
+        "requestBody": {
+          "description": "Record to add.\n",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecord"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Record was created\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error: Malformed client data\n"
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Record not found\n"
+          },
+          "422": {
+            "description": "Error: Field value validation failed\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/zones/{zoneID}/records/{recordID}": {
+      "parameters": [
+        {
+          "name": "zoneID",
+          "in": "path",
+          "description": "ID of the parent zone under which the record will be created.",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        {
+          "name": "recordID",
+          "in": "path",
+          "description": "ID of the record in question.",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Get details for a record",
+        "description": "Returns details of the specified record by its ID that the current user has access to.\n",
+        "operationId": "getRecordByID",
+        "responses": {
+          "200": {
+            "description": "Record\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordRead"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Record or zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Update an existing record",
+        "description": "Updates the given record based on the ID supplied and owned by the current user.\n",
+        "operationId": "updateRecord",
+        "responses": {
+          "200": {
+            "description": "Updated record\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordRead"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Record or zone not found\n"
+          },
+          "422": {
+            "description": "Error: Field value validation failed\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Delete a record",
+        "description": "Deletes the given record based on the ID supplied and owned by the current user.\n",
+        "operationId": "deleteRecord",
+        "responses": {
+          "204": {
+            "description": "Record was successfully deleted\n"
+          },
+          "401": {
+            "description": "Error: Unauthorized\n"
+          },
+          "403": {
+            "description": "Error: Forbidden\n"
+          },
+          "404": {
+            "description": "Error: Record or zone not found\n"
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Zone": {
+        "properties": {
+          "id": {
+            "description": "The ID uniquely identifies a zone in our database.\n",
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true
+          },
+          "name": {
+            "description": "The full-qualified domain name for this zone.\n",
+            "type": "string",
+            "format": "hostname",
+            "readOnly": true
+          },
+          "ipv4address": {
+            "description": "Primary IPv4 address (`A` record) of this zone.\n",
+            "type": "string",
+            "format": "ipv4"
+          },
+          "ipv6prefix": {
+            "description": "Primary IPv6 address or prefix (`AAAA` record) of this zone.\n",
+            "type": "string",
+            "format": "ipv6"
+          },
+          "createdAt": {
+            "description": "ISO8601 formatted timestamp of the creation of this zone.\n",
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "description": "ISO8601 formatted timestamp of the last update of this zone.\n",
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "Record": {
+        "$ref": "#/components/schemas/RecordRead"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Error"
+              },
+              {
+                "$ref": "#/components/schemas/error_ValidationError"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "name",
+              "mapping": {
+                "ValidationError": "#/components/schemas/error_ValidationError"
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "fields"
+            ]
+          }
+        ]
+      },
+      "zone_Zone": {
+        "properties": {
+          "id": {
+            "description": "The ID uniquely identifies a zone in our database.\n",
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true
+          },
+          "name": {
+            "description": "The full-qualified domain name for this zone.\n",
+            "type": "string",
+            "format": "hostname",
+            "readOnly": true
+          },
+          "ipv4address": {
+            "description": "Primary IPv4 address (`A` record) of this zone.\n",
+            "type": "string",
+            "format": "ipv4"
+          },
+          "ipv6prefix": {
+            "description": "Primary IPv6 address or prefix (`AAAA` record) of this zone.\n",
+            "type": "string",
+            "format": "ipv6"
+          },
+          "createdAt": {
+            "description": "ISO8601 formatted timestamp of the creation of this zone.\n",
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "description": "ISO8601 formatted timestamp of the last update of this zone.\n",
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "NewZone": {
+        "properties": {
+          "name": {
+            "description": "The full-qualified domain name for the new zone.\n",
+            "type": "string",
+            "format": "hostname"
+          },
+          "ipv4address": {
+            "description": "Primary IPv4 address (`A` record) for the new zone.\n",
+            "type": "string",
+            "format": "ipv4"
+          },
+          "ipv6prefix": {
+            "description": "Primary IPv6 address or prefix (`AAAA` record) for the new zone.\n",
+            "type": "string",
+            "format": "ipv6"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "message"
+        ]
+      },
+      "error_ValidationError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Error"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "fields"
+            ]
+          }
+        ]
+      },
+      "error_ErrorResponse": {
+        "properties": {
+          "error": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Error"
+              },
+              {
+                "$ref": "#/components/schemas/error_ValidationError"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "name",
+              "mapping": {
+                "ValidationError": "#/components/schemas/error_ValidationError"
+              }
+            }
+          }
+        }
+      },
+      "record_Record": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "format": "hostname"
+          },
+          "priority": {
+            "description": "The `priority` field defines an order. Given multiple records with a\npriority, the ones with lower values will generally be preferred.\nUsually, a client fetches all records, sorts them by priority and\ntries one after the other.\n\n**Note:** The `priority` field is currently only supported for\n`MX` and `SRV` records. Other record types silently ignore this field.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "port": {
+            "description": "The `port` the target port for a `SRV` record.\nOther record types silently ignore this field.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "weight": {
+            "description": "The `weight` the weight for a `SRV` record.\nOther record types silently ignore this field.\n",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "flags": {
+            "description": "The `flags` field represents a bit-field used for extensions for\n`CAA` records. RFC 8659 currently only specifies a value of 128\nas *issuer critical*.\n\n**Note:** This field is only supported for `CAA` records. Other\nrecord types silently ignore this field.\n",
+            "type": "integer"
+          },
+          "tag": {
+            "description": "**Note:** This field is only supported for `CAA` records. Other\nrecord types silently ignore this field.\n",
+            "type": "string",
+            "enum": [
+              "issue",
+              "issuewild",
+              "iodef"
+            ]
+          },
+          "data": {
+            "description": "The value (or payload) for a record. For `CNAME`, `MX`, `SRV` records, this might\nbe a hostname, or an IP address for `A` and `AAAA` records, etc.\n",
+            "type": "string"
+          }
+        }
+      },
+      "RecordFieldType": {
+        "type": "string",
+        "enum": [
+          "A",
+          "AAAA",
+          "CAA",
+          "CNAME",
+          "MX",
+          "SPF",
+          "SRV",
+          "TXT"
+        ]
+      },
+      "RecordRead": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/record_Record"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "expandedData": {
+                "type": "string",
+                "readOnly": true,
+                "description": "This field, when present, contains an expanded value of the `data` field. Examples inlude, but are not limited to:\n- Full qualified names for `CNAME` and `MX` records. Unless the data field\n  itself is fully qualified (i.e. it ends in a `.`), the `expandedData` will\n  concatenate a `.` and the parent zone's name.\n- Full IPv6 addresses, when `data` is a MAC address. The MAC address gets\n  translated into EUI-64 and will be prefixed with the parent zone's IPv6\n  prefix.\n\nIf the expansion results in the same value as `data` (or if the expansion fails for some reason), the `expandedData` field will be absent."
+              },
+              "id": {
+                "type": "integer",
+                "format": "int64",
+                "readOnly": true
+              },
+              "zoneID": {
+                "type": "integer",
+                "format": "int64",
+                "readOnly": true
+              },
+              "type": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RecordFieldType"
+                  },
+                  {
+                    "readOnly": true
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "name",
+              "data",
+              "id",
+              "zoneID"
+            ]
+          }
+        ]
+      },
+      "NewRecord": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/record_Record"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RecordFieldType"
+                  },
+                  {
+                    "writeOnly": true
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "name",
+              "data"
+            ]
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "description": "To authenticate with the REST API you first need to\n[create an HTTP token](https://dynv6.com/keys/). An API key is\nrestricted to your account, i.e. you cannot edit zones and records\nof other users. You may optionally further restrict an HTTP token\nto a single zone. You can create as many keys as you wish.\n\nThen add the following header to your HTTP request:\n\n    Authorization: Bearer YOUR_TOKEN\n\n(replace `YOUR_TOKEN` with, well, your token). If the requests sent\nto our servers contain an invalid token, you'll generally receive\na `401 Unauthorized` response.\n\nExample with cURL:\n\n    curl \\\n        -H \"Authorization: Bearer YOUR_TOKEN\" \\\n        -H \"Accept: application/json\" \\\n        https://dynv6.com/api/v2/zones\n",
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

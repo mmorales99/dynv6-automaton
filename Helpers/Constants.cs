@@ -1,19 +1,11 @@
 ﻿using System.Text.Json;
 
-namespace MCVIngenieros;
+namespace Helpers;
 
 public static class Constants 
 {
-    public const string DEFAULT_LAST_IP_PATH = ".\\lasIp.txt"
-        , DYNV6_URL = "https://ipv4.dynv6.com/api/update?ipv4=$ipv4&zone=$hostname&token=$httpToken"
-        , DYNV6_RECORD_URL = "https://dynv6.com/api/v2/zones/$zoneID/records/$recordID"
-        , NO_IP_PROVIDER_LIST = "PublicIpProviders Array must be filled with http urls to Public IP APIs in order to check if ip changed."
-        , NO_HOST_NAME_AVALIABLE_IN_ENVIRONMENT_VARIABLES = "No {prefix}__hostname key was found in environment variables."
-        , NO_HTTPTOKEN_NAME_AVALIABLE_IN_ENVIRONMENT_VARIABLES = "No {prefix}__httptoken key was found in environment variables."
-        ;
-
     public readonly static
-        JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+        JsonSerializerOptions JsonSerializerOptions = new()
         {
             AllowTrailingCommas = true,
             UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip,
@@ -31,13 +23,16 @@ public static class Constants
             ClientCertificateOptions = ClientCertificateOption.Manual,
             Credentials = null,
             PreAuthenticate = false,
-            ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
-            SslProtocols = System.Security.Authentication.SslProtocols.None
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+            SslProtocols = System.Security.Authentication.SslProtocols.None,
+            MaxConnectionsPerServer = int.MaxValue,
+            MaxResponseHeadersLength = int.MaxValue,
+            MaxAutomaticRedirections = int.MaxValue,
+            MaxRequestContentBufferSize = int.MaxValue,
         };
 
-    public readonly static
-        HttpClient httpClient = new(httpClientHandler)
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+    public static HttpClient GetHttpClient() => new(httpClientHandler)
+    {
+        Timeout = TimeSpan.FromSeconds(30),
+    };
 }
