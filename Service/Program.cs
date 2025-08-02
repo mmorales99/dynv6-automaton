@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace Service;
 
 public class Program

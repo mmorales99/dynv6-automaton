@@ -105,7 +105,7 @@ public class Dynv6Client(IOptions<Dynv6Options> options) : IDnsClient
         var updateZoneUri = $"zones/{zoneId}";
         var request = new HttpRequestMessage(HttpMethod.Patch, updateZoneUri)
         {
-            Content = JsonContent.Create(new { ipv4address = ip })
+            Content = JsonContent.Create(new { ipv4address = ip, ipv6address = "auto" })
         };
         var response = HttpClient.SendAsync(request).Result;
         if (!response.IsSuccessStatusCode)
