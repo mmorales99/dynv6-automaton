@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
+VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dyndns", "Dyndns\Dyndns.csproj", "{7231D6BB-0F4C-4A90-97EC-98C7CBE715D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{40A5C1BA-EBDB-4EBC-960C-6780F369290B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helpers", "Helpers\Helpers.csproj", "{57B68BDB-4AD1-72E6-BF38-FF4B9A787EA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnsClient", "DnsClient\DnsClient.csproj", "{2B34E112-1EE6-4613-B095-6FF49559FE70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helpers", "Helpers\Helpers.csproj", "{DF5C9CFC-8DDE-473B-98AA-83756671591C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7231D6BB-0F4C-4A90-97EC-98C7CBE715D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7231D6BB-0F4C-4A90-97EC-98C7CBE715D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7231D6BB-0F4C-4A90-97EC-98C7CBE715D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7231D6BB-0F4C-4A90-97EC-98C7CBE715D8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{57B68BDB-4AD1-72E6-BF38-FF4B9A787EA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{57B68BDB-4AD1-72E6-BF38-FF4B9A787EA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{57B68BDB-4AD1-72E6-BF38-FF4B9A787EA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{57B68BDB-4AD1-72E6-BF38-FF4B9A787EA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40A5C1BA-EBDB-4EBC-960C-6780F369290B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40A5C1BA-EBDB-4EBC-960C-6780F369290B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40A5C1BA-EBDB-4EBC-960C-6780F369290B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40A5C1BA-EBDB-4EBC-960C-6780F369290B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B34E112-1EE6-4613-B095-6FF49559FE70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B34E112-1EE6-4613-B095-6FF49559FE70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B34E112-1EE6-4613-B095-6FF49559FE70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B34E112-1EE6-4613-B095-6FF49559FE70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF5C9CFC-8DDE-473B-98AA-83756671591C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF5C9CFC-8DDE-473B-98AA-83756671591C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF5C9CFC-8DDE-473B-98AA-83756671591C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF5C9CFC-8DDE-473B-98AA-83756671591C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

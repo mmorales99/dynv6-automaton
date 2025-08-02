@@ -1,0 +1,69 @@
+﻿@token = 
+@zone = 
+
+@baseUrl = https://dynv6.com/api/v2
+
+### Obtener información de zona por nombre
+GET {{baseUrl}}/zones/by-name/{{zone}}
+Authorization: Bearer {{token}}
+
+### Obtener el ID de la zona
+# Esta petición devuelve información detallada de la zona, incluyendo su ID
+GET {{baseUrl}}/zones/by-name/{{zone}}
+Authorization: Bearer {{token}}
+
+### Obtener todos los registros de una zona
+# Primero debes obtener el ID de la zona con la petición anterior
+@zoneId = 
+GET {{baseUrl}}/zones/{{zoneId}}/records
+Authorization: Bearer {{token}}
+
+### Actualizar zona (dirección IPv4)
+# Actualiza la dirección IPv4 principal de la zona
+PATCH {{baseUrl}}/zones/{{zoneId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "ipv4address": ""
+}
+
+### Actualizar registro A específico
+# Primero debes obtener el ID del registro con la petición "Obtener todos los registros"
+@recordId = 67890 // Reemplaza con el ID real del registro A
+PATCH {{baseUrl}}/zones/{{zoneId}}/records/{{recordId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "Name": "{{zone}}",
+  "Data": "",
+  "Type": "A"
+}
+
+### Crear nuevo registro A
+POST {{baseUrl}}/zones/{{zoneId}}/records
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "type": "A",
+  "name": "{{zone}}",
+  "data": ""
+}
+
+### Eliminar registro A
+DELETE {{baseUrl}}/zones/{{zoneId}}/records/{{recordId}}
+Authorization: Bearer {{token}}
+
+### Actualizar registro A con dirección IP automática
+# Útil para actualizar con la IP pública actual
+PATCH {{baseUrl}}/zones/{{zoneId}}/records/{{recordId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "Name": "{{zone}}",
+  "Data": "auto", 
+  "Type": "A"
+}
