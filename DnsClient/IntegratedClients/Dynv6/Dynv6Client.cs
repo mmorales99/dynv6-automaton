@@ -21,16 +21,51 @@ public class Dynv6Client(IOptions<Dynv6Options> options) : IDnsClient
     {
         BaseAddress = new Uri("https://dynv6.com/api/v2/"),
     };
-
-    public void UpdateARecords(string ip)
+    public void UpdateARecords(string ip) 
     {
-        if (string.IsNullOrWhiteSpace(_options.Zone) || string.IsNullOrWhiteSpace(_options.Token))
+        if (string.IsNullOrEmpty(ip)) return;
+        if (string.IsNullOrEmpty(_options.Zone)) 
+        {
+            if (_options.Tuples != null && _options.Tuples.Length > 0) 
+            {
+                foreach (var tuple in _options.Tuples)
+                {
+                    if (!string.IsNullOrWhiteSpace(tuple.Zone))
+                    {
+                        var token = tuple.Token ?? _options.Token;
+                        if (string.IsNullOrWhiteSpace(token))
+                        {
+                            throw new ArgumentException("Token must be provided in Dynv6Options or Tuples.");
+                        }
+                        UpdateARecords(ip, tuple.Zone, token);
+                    }
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Zone must be provided in Dynv6Options or Tuples must be defined.");
+            }
+        }
+        else
+        {
+            var token = _options.Token;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                throw new ArgumentException("Token must be provided in Dynv6Options.");
+            }
+            UpdateARecords(ip, _options.Zone, token);
+        }
+    }
+
+    private static void UpdateARecords(string ip, string zone, string token)
+    {
+        if (string.IsNullOrWhiteSpace(zone) || string.IsNullOrWhiteSpace(token))
         {
             throw new ArgumentException("Zone and Token must be provided in Dynv6Options.");
         }
 
-        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.Token);
-        var zoneId = GetZoneId(_options.Zone);
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var zoneId = GetZoneId(zone);
         UpdateZone(ip, zoneId);
         var record = GetARecordId(zoneId);
         if (record != null)
@@ -122,6 +157,6 @@ public class Dynv6Client(IOptions<Dynv6Options> options) : IDnsClient
         response.EnsureSuccessStatusCode();
         var responseContent = response.Content.ReadAsStringAsync().Result;
         var responseObject = JsonSerializer.Deserialize<Dynv6ZoneInfo>(responseContent, Helpers.Constants.JsonSerializerOptions);
-        return responseObject.Id.ToString();
+        return responseObject?.Id.ToString() ?? string.Empty;
     }
 }
