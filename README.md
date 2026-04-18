@@ -30,3 +30,27 @@ Write-Host "${prefix}__hostname = $([Environment]::GetEnvironmentVariable("${pre
 Write-Host "${prefix}__httptoken = $([Environment]::GetEnvironmentVariable("${prefix}__httptoken", "Process"))"
 
 ```
+
+## Scaffold
+
+The repository now includes a .NET solution with:
+
+- `src/Dyndns.Service` for the Windows service host and Dynv6 integration boundaries
+- `test/Dyndns.Service.Tests` for the first unit-test slice
+
+To build and test the scaffold:
+
+```bash
+dotnet build Dyndns.slnx
+dotnet test Dyndns.slnx
+```
+
+## Failure Notifications
+
+If the update flow fails, the service now sends an email notification and switches to retry mode.
+
+- Normal health checks run every 5 minutes.
+- Failed updates retry every hour.
+- Failure emails are sent every hour during daytime and every 8 hours during nighttime.
+
+Configure SMTP settings under the `Notifications` section in `src/Dyndns.Service/appsettings.json`.
