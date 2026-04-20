@@ -1,5 +1,6 @@
 const latestMeta = document.getElementById("latestMeta");
 const latestResume = document.getElementById("latestResume");
+const latestStatus = document.getElementById("latestStatus");
 const latestDuration = document.getElementById("latestDuration");
 const latestRunAt = document.getElementById("latestRunAt");
 const latestErrorType = document.getElementById("latestErrorType");
@@ -73,6 +74,30 @@ function getLatestResumeText(entry) {
   return entry.updated
     ? "The update completed successfully."
     : "No DNS changes were needed.";
+}
+
+function getLatestStatusText(entry) {
+  if (!entry) {
+    return "--";
+  }
+
+  if (!entry.succeeded) {
+    return "FAILED";
+  }
+
+  return entry.updated ? "UPDATED" : "NO CHANGE";
+}
+
+function getLatestStatusClass(entry) {
+  if (!entry) {
+    return "status-warn";
+  }
+
+  if (!entry.succeeded) {
+    return "status-bad";
+  }
+
+  return entry.updated ? "status-good" : "status-warn";
 }
 
 function getLatestErrorType(entry) {
@@ -273,22 +298,28 @@ function renderHistory(entries) {
   if (!entries.length) {
     runsBody.innerHTML =
       '<tr><td colspan="5" class="muted">No runs recorded yet.</td></tr>';
+    latestStatus.textContent = "--";
+    latestStatus.className = "status-value status-warn";
     latestMeta.textContent = "Launch a run to create the first entry.";
     latestResume.textContent = "Launch a run to create the first entry.";
     latestDuration.textContent = "--";
     latestRunAt.textContent = "--";
     latestErrorType.textContent = "--";
     latestErrorType.className = "status-value status-warn";
+    latestErrorType.hidden = true;
     return;
   }
 
   const [latest] = entries;
+  latestStatus.textContent = getLatestStatusText(latest);
+  latestStatus.className = `status-value ${getLatestStatusClass(latest)}`;
   latestMeta.textContent = `${formatDate(latest.startedAt)} • ${latest.message}`;
   latestResume.textContent = getLatestResumeText(latest);
   latestDuration.textContent = formatDuration(latest.durationMilliseconds);
   latestRunAt.textContent = formatDate(latest.startedAt);
   latestErrorType.textContent = getLatestErrorType(latest);
   latestErrorType.className = `status-value ${getLatestErrorTypeClass(latest)}`;
+  latestErrorType.hidden = latest.succeeded;
 
   runsBody.innerHTML = entries
     .map((entry) => {
@@ -361,12 +392,15 @@ async function loadHistory() {
     renderHistory(entries);
   } catch (error) {
     runsBody.innerHTML = `<tr><td colspan="5" class="muted">${escapeHtml(error.message)}</td></tr>`;
+    latestStatus.textContent = "--";
+    latestStatus.className = "status-value status-warn";
     latestMeta.textContent = error.message;
     latestResume.textContent = "History could not be loaded.";
     latestDuration.textContent = "--";
     latestRunAt.textContent = "--";
     latestErrorType.textContent = "--";
     latestErrorType.className = "status-value status-warn";
+    latestErrorType.hidden = true;
     openDetailsKey = null;
   }
 }

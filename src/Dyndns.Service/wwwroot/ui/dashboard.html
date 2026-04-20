@@ -46,26 +46,37 @@
 
       <section class="grid">
         <div class="stack">
-          <article class="card summary-main">
+          <div class="summary-main">
             <div class="status-panel" id="latestStatusPanel">
-              <div class="status-panel-row status-panel-row-total">
-                <div class="status-item status-item-right status-span-2">
+              <div class="status-panel-row status-panel-row-top">
+                <div class="status-item status-item-left">
+                  <span class="status-label">Status :</span>
+                  <span class="status-value" id="latestStatus"
+                    >{Status placeholder}</span
+                  >
+                </div>
+                <div class="status-item status-item-right">
                   <span class="status-label">Total time :</span>
-                  <span class="status-value" id="latestDuration">--</span>
+                  <span class="status-value" id="latestDuration"
+                    >{Durantion placeholder}</span
+                  >
                 </div>
               </div>
               <div class="status-panel-row status-panel-row-bottom">
-                <div class="status-item status-item-left status-span-2">
+                <div class="status-item status-item-left">
                   <span class="status-label">Run at :</span>
-                  <span class="status-value" id="latestRunAt">--</span>
+                  <span class="status-value" id="latestRunAt"
+                    >{run_at placeholder}</span
+                  >
                 </div>
-                <div class="status-item status-item-center status-span-2">
+                <!-- Show this error if any, otherwise, dont -->
+                <div class="status-item status-item-right">
                   <span class="status-label">Error type :</span>
                   <span class="status-value" id="latestErrorType">--</span>
                 </div>
               </div>
             </div>
-          </article>
+          </div>
 
           <div class="feedback" id="settingsAccessFeedback"></div>
 
