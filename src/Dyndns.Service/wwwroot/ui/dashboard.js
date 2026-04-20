@@ -28,6 +28,12 @@ const runtimeSettingsPathInput = document.getElementById("runtimeSettingsPath");
 const runHistoryPathInput = document.getElementById("runHistoryPath");
 let openDetailsKey = null;
 
+function setTextContent(element, value) {
+  if (element) {
+    element.textContent = value;
+  }
+}
+
 function formatDate(value) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -300,11 +306,11 @@ function renderHistory(entries) {
       '<tr><td colspan="5" class="muted">No runs recorded yet.</td></tr>';
     latestStatus.textContent = "--";
     latestStatus.className = "status-value status-warn";
-    latestMeta.textContent = "Launch a run to create the first entry.";
-    latestResume.textContent = "Launch a run to create the first entry.";
-    latestDuration.textContent = "--";
-    latestRunAt.textContent = "--";
-    latestErrorType.textContent = "--";
+    setTextContent(latestMeta, "Launch a run to create the first entry.");
+    setTextContent(latestResume, "Launch a run to create the first entry.");
+    setTextContent(latestDuration, "--");
+    setTextContent(latestRunAt, "--");
+    setTextContent(latestErrorType, "--");
     latestErrorType.className = "status-value status-warn";
     latestErrorType.hidden = true;
     return;
@@ -313,11 +319,14 @@ function renderHistory(entries) {
   const [latest] = entries;
   latestStatus.textContent = getLatestStatusText(latest);
   latestStatus.className = `status-value ${getLatestStatusClass(latest)}`;
-  latestMeta.textContent = `${formatDate(latest.startedAt)} • ${latest.message}`;
-  latestResume.textContent = getLatestResumeText(latest);
-  latestDuration.textContent = formatDuration(latest.durationMilliseconds);
-  latestRunAt.textContent = formatDate(latest.startedAt);
-  latestErrorType.textContent = getLatestErrorType(latest);
+  setTextContent(
+    latestMeta,
+    `${formatDate(latest.startedAt)} • ${latest.message}`,
+  );
+  setTextContent(latestResume, getLatestResumeText(latest));
+  setTextContent(latestDuration, formatDuration(latest.durationMilliseconds));
+  setTextContent(latestRunAt, formatDate(latest.startedAt));
+  setTextContent(latestErrorType, getLatestErrorType(latest));
   latestErrorType.className = `status-value ${getLatestErrorTypeClass(latest)}`;
   latestErrorType.hidden = latest.succeeded;
 
@@ -394,11 +403,11 @@ async function loadHistory() {
     runsBody.innerHTML = `<tr><td colspan="5" class="muted">${escapeHtml(error.message)}</td></tr>`;
     latestStatus.textContent = "--";
     latestStatus.className = "status-value status-warn";
-    latestMeta.textContent = error.message;
-    latestResume.textContent = "History could not be loaded.";
-    latestDuration.textContent = "--";
-    latestRunAt.textContent = "--";
-    latestErrorType.textContent = "--";
+    setTextContent(latestMeta, error.message);
+    setTextContent(latestResume, "History could not be loaded.");
+    setTextContent(latestDuration, "--");
+    setTextContent(latestRunAt, "--");
+    setTextContent(latestErrorType, "--");
     latestErrorType.className = "status-value status-warn";
     latestErrorType.hidden = true;
     openDetailsKey = null;
