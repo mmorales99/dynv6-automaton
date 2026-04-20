@@ -280,28 +280,7 @@ button:disabled {
 .summary-side {
   justify-self: end;
   width: 100%;
-  max-width: 320px;
-}
-
-.summary.status-ok {
-  border-color: rgba(34, 197, 94, 0.28);
-  box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.12),
-    var(--shadow);
-}
-
-.summary.status-failed {
-  border-color: rgba(239, 68, 68, 0.28);
-  box-shadow:
-    0 0 0 1px rgba(239, 68, 68, 0.12),
-    var(--shadow);
-}
-
-.summary.status-warn {
-  border-color: rgba(245, 158, 11, 0.28);
-  box-shadow:
-    0 0 0 1px rgba(245, 158, 11, 0.12),
-    var(--shadow);
+  max-width: 360px;
 }
 
 .summary h2,
@@ -309,23 +288,6 @@ button:disabled {
   margin: 0;
   font-size: 0.98rem;
   letter-spacing: 0.02em;
-}
-
-.summary .value {
-  display: block;
-  margin-top: 6px;
-  font-size: 1.45rem;
-  line-height: 1.1;
-}
-
-.summary.status-ok .value {
-  color: var(--good);
-}
-.summary.status-failed .value {
-  color: var(--bad);
-}
-.summary.status-warn .value {
-  color: var(--accent);
 }
 
 .summary .resume {
@@ -345,8 +307,8 @@ button:disabled {
 .status-panel {
   display: grid;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
   overflow: hidden;
 }
 
@@ -354,7 +316,15 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
-  padding: 8px 10px;
+  padding: 10px 12px;
+}
+
+.status-panel-row-total {
+  justify-items: end;
+}
+
+.status-panel-row-bottom {
+  justify-items: stretch;
 }
 
 .status-panel-row + .status-panel-row {
@@ -373,17 +343,31 @@ button:disabled {
   text-align: right;
 }
 
+.status-item-left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.status-item-center {
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.status-span-2 {
+  grid-column: 1 / -1;
+}
+
 .status-label {
   color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .status-value {
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   font-weight: 700;
   line-height: 1.1;
   min-width: 0;

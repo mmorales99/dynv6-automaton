@@ -46,36 +46,22 @@
 
       <section class="grid">
         <div class="stack">
-          <article class="card summary">
-            <div class="summary-main">
-              <h2>Last run resume</h2>
-              <span class="value" id="latestOutcome">Loading...</span>
-              <div class="meta" id="latestMeta">
-                Fetching persisted history from disk.
-              </div>
-              <div class="resume" id="latestResume"></div>
-            </div>
-            <div class="summary-side">
-              <div class="status-panel" id="latestStatusPanel">
-                <div class="status-panel-row">
-                  <div class="status-item">
-                    <span class="status-label">Status :</span>
-                    <span class="status-value" id="latestStatus">--</span>
-                  </div>
-                  <div class="status-item status-item-right">
-                    <span class="status-label">Total time :</span>
-                    <span class="status-value" id="latestDuration">--</span>
-                  </div>
+          <article class="card summary-main">
+            <div class="status-panel" id="latestStatusPanel">
+              <div class="status-panel-row status-panel-row-total">
+                <div class="status-item status-item-right status-span-2">
+                  <span class="status-label">Total time :</span>
+                  <span class="status-value" id="latestDuration">--</span>
                 </div>
-                <div class="status-panel-row status-panel-row-bottom">
-                  <div class="status-item">
-                    <span class="status-label">Run at :</span>
-                    <span class="status-value" id="latestRunAt">--</span>
-                  </div>
-                  <div class="status-item status-item-right">
-                    <span class="status-label">Error type :</span>
-                    <span class="status-value" id="latestErrorType">--</span>
-                  </div>
+              </div>
+              <div class="status-panel-row status-panel-row-bottom">
+                <div class="status-item status-item-left status-span-2">
+                  <span class="status-label">Run at :</span>
+                  <span class="status-value" id="latestRunAt">--</span>
+                </div>
+                <div class="status-item status-item-center status-span-2">
+                  <span class="status-label">Error type :</span>
+                  <span class="status-value" id="latestErrorType">--</span>
                 </div>
               </div>
             </div>
