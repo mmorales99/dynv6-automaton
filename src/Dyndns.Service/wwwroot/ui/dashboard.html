@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dynv6 Automaton</title>
+    <link rel="stylesheet" href="/ui/dashboard.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Service dashboard</p>
+          <h1>Dynv6 service control</h1>
+          <p class="lede">
+            See recent runs, check the result, and start an update whenever you
+            need to.
+          </p>
+          <div class="hero-actions">
+            <button class="primary" id="runButton" type="button">RUN</button>
+          </div>
+        </div>
+        <div class="session-bar">
+          <span class="session-chip" id="sessionBadge"
+            >Checking session...</span
+          >
+          <button
+            class="secondary settings-toggle"
+            id="settingsToggleButton"
+            type="button"
+          >
+            SETTINGS
+          </button>
+          <button class="secondary" id="logoutButton" type="button">
+            LOG OUT
+          </button>
+        </div>
+      </section>
+
+      <div class="viewer-note" id="viewerNote" hidden>
+        You are signed in as viewer. You can review the dashboard and run
+        updates with your password.
+      </div>
+
+      <div class="feedback" id="runFeedback"></div>
+
+      <section class="grid">
+        <div class="stack">
+          <article class="card summary">
+            <div class="summary-main">
+              <h2>Last run resume</h2>
+              <span class="value" id="latestOutcome">Loading...</span>
+              <div class="meta" id="latestMeta">
+                Fetching persisted history from disk.
+              </div>
+              <div class="resume" id="latestResume"></div>
+            </div>
+            <div class="summary-side">
+              <div class="status-panel" id="latestStatusPanel">
+                <div class="status-panel-row">
+                  <div class="status-item">
+                    <span class="status-label">Status :</span>
+                    <span class="status-value" id="latestStatus">--</span>
+                  </div>
+                  <div class="status-item status-item-right">
+                    <span class="status-label">Total time :</span>
+                    <span class="status-value" id="latestDuration">--</span>
+                  </div>
+                </div>
+                <div class="status-panel-row status-panel-row-bottom">
+                  <div class="status-item">
+                    <span class="status-label">Run at :</span>
+                    <span class="status-value" id="latestRunAt">--</span>
+                  </div>
+                  <div class="status-item status-item-right">
+                    <span class="status-label">Error type :</span>
+                    <span class="status-value" id="latestErrorType">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <div class="feedback" id="settingsAccessFeedback"></div>
+
+          <article
+            class="settings-overlay"
+            id="settingsOverlay"
+            aria-hidden="true"
+            hidden
+          >
+            <div class="card settings settings-shell" id="settingsShell">
+              <div class="settings-header">
+                <div>
+                  <h2>Settings</h2>
+                  <div class="helper">
+                    Changes are saved to the runtime settings file and take
+                    effect immediately for manual and scheduled runs.
+                  </div>
+                </div>
+                <button
+                  class="secondary close-button"
+                  id="closeSettingsButton"
+                  type="button"
+                  aria-label="Close settings"
+                >
+                  <span>×</span>
+                </button>
+              </div>
+              <form class="settings-form" id="settingsForm">
+                <div class="field">
+                  <label for="zoneName">Zone name</label>
+                  <input
+                    id="zoneName"
+                    name="zoneName"
+                    type="text"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="field">
+                  <label for="key">Dynv6 key</label>
+                  <input
+                    id="key"
+                    name="key"
+                    type="password"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label for="lastPublicIpPath">Last public IP path</label>
+                    <input
+                      id="lastPublicIpPath"
+                      name="lastPublicIpPath"
+                      type="text"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="field">
+                    <label for="runtimeSettingsPath"
+                      >Runtime settings path</label
+                    >
+                    <input
+                      id="runtimeSettingsPath"
+                      name="runtimeSettingsPath"
+                      type="text"
+                      autocomplete="off"
+                    />
+                  </div>
+                </div>
+                <div class="field-inline">
+                  <input id="forceUpdate" name="forceUpdate" type="checkbox" />
+                  <label
+                    for="forceUpdate"
+                    style="
+                      color: var(--text);
+                      text-transform: none;
+                      letter-spacing: normal;
+                    "
+                    >Force update on every run</label
+                  >
+                </div>
+                <div class="field">
+                  <label for="scheduledEvery">Every</label>
+                  <input
+                    id="scheduledEvery"
+                    class="schedule-input"
+                    name="scheduledEvery"
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="00:05:00"
+                    autocomplete="off"
+                  />
+                  <div class="helper">
+                    Format: HH:MM:SS. Example: 00:05:00 runs every five minutes.
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="runHistoryPath">Run history path</label>
+                  <input
+                    id="runHistoryPath"
+                    name="runHistoryPath"
+                    type="text"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="actions" style="justify-content: flex-start">
+                  <button class="primary" id="saveSettingsButton" type="submit">
+                    SAVE SETTINGS
+                  </button>
+                </div>
+                <div class="feedback" id="settingsFeedback"></div>
+              </form>
+            </div>
+          </article>
+        </div>
+
+        <article class="card history">
+          <h2>Run history</h2>
+          <div class="muted" style="margin-top: 8px">
+            Newest entries appear first. The manual run button writes a new
+            entry immediately.
+          </div>
+          <div class="history-scroll">
+            <table aria-label="Run history">
+              <thead>
+                <tr>
+                  <th>Started</th>
+                  <th>Status</th>
+                  <th>IPs</th>
+                  <th>Message</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="runsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/ui/dashboard.js" type="module"></script>
+  </body>
+</html>

@@ -45,6 +45,7 @@ builder.Services.AddHostedService<DnsUpdateWorker>();
 
 var app = builder.Build();
 
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 

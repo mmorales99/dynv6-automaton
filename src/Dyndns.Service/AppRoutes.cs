@@ -29,7 +29,7 @@ internal static class AppRoutes
     {
         app.MapGet("/", HandleRoot);
         app.MapGet("/dashboard", HandleDashboard);
-        app.MapGet("/login", () => Results.Content(AuthPages.LoginHtml(), HtmlContentType));
+        app.MapGet("/login", (IWebHostEnvironment environment) => Results.Content(AuthPages.LoginHtml(environment), HtmlContentType));
         app.MapGet("/setup", GetSetupPage);
     }
 
@@ -118,31 +118,31 @@ internal static class AppRoutes
             return Results.Ok(await runner.RunAsync("manual", cancellationToken, request.ForceUpdate && user.IsAdmin));
         }
 
-    private static IResult HandleRoot(IUserStore userStore)
+    private static IResult HandleRoot(IUserStore userStore, IWebHostEnvironment environment)
     {
         if (!userStore.IsInitialized)
         {
-            return Results.Content(AuthPages.SetupHtml(), HtmlContentType);
+            return Results.Content(AuthPages.SetupHtml(environment), HtmlContentType);
         }
 
-        return Results.Content(AuthPages.LoginHtml(), HtmlContentType);
+        return Results.Content(AuthPages.LoginHtml(environment), HtmlContentType);
     }
 
-    private static IResult HandleDashboard(HttpContext context, IUserStore userStore)
+    private static IResult HandleDashboard(HttpContext context, IUserStore userStore, IWebHostEnvironment environment)
     {
         if (!userStore.IsInitialized)
         {
-            return Results.Content(AuthPages.SetupHtml(), HtmlContentType);
+            return Results.Content(AuthPages.SetupHtml(environment), HtmlContentType);
         }
 
         return (context.User.Identity?.IsAuthenticated ?? false)
-            ? Results.Content(WebUiPage.Html, HtmlContentType)
-            : Results.Content(AuthPages.LoginHtml(), HtmlContentType);
+            ? Results.Content(WebUiPage.Html(environment), HtmlContentType)
+            : Results.Content(AuthPages.LoginHtml(environment), HtmlContentType);
     }
 
-    private static IResult GetSetupPage(IUserStore userStore)
+    private static IResult GetSetupPage(IUserStore userStore, IWebHostEnvironment environment)
         => Results.Content(
-            userStore.IsInitialized ? AuthPages.LoginHtml("The user store is already initialized.") : AuthPages.SetupHtml(),
+            userStore.IsInitialized ? AuthPages.LoginHtml(environment, "The user store is already initialized.") : AuthPages.SetupHtml(environment),
             HtmlContentType);
 
     private static async Task<IResult> HandleSetupAsync(
