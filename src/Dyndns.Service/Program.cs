@@ -1,40 +1,61 @@
 using Dyndns.Service;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
-var hostBuilder = Host.CreateDefaultBuilder(args)
-	.UseWindowsService(options =>
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseWindowsService(options =>
+{
+	options.ServiceName = "Dynv6 Automaton";
+});
+
+builder.WebHost.UseUrls(builder.Configuration["WebUi:Url"] ?? "http://localhost:5050");
+
+builder.Services.Configure<Dynv6Options>(builder.Configuration.GetSection(Dynv6Options.SectionName));
+builder.Services.Configure<SmtpNotificationOptions>(builder.Configuration.GetSection(SmtpNotificationOptions.SectionName));
+builder.Services.PostConfigure<Dynv6Options>(ApplyEnvironmentOverrides);
+builder.Services.AddHttpClient<IpifyClient>();
+builder.Services.AddSingleton<IPublicIpProvider, IpifyPublicIpProvider>();
+builder.Services.AddSingleton<IIpChangeChecker, IpChangeChecker>();
+builder.Services.AddSingleton<IIpChangeManager, IpChangeManager>();
+builder.Services.AddSingleton<IUpdateFailurePolicy, UpdateFailurePolicy>();
+builder.Services.AddSingleton<IUpdateFailureNotifier, SmtpUpdateFailureNotifier>();
+builder.Services.AddHttpClient<IDynv6Client, Dynv6Client>();
+builder.Services.AddSingleton<IDynv6SettingsService, FileDynv6SettingsService>();
+builder.Services.AddSingleton<IUpdateStateStore, FileUpdateStateStore>();
+builder.Services.AddSingleton<IUpdateRunHistoryStore, FileUpdateRunHistoryStore>();
+builder.Services.AddSingleton<IDnsUpdateService, DnsUpdateService>();
+builder.Services.AddSingleton<IUpdateCycleRunner, UpdateCycleRunner>();
+builder.Services.AddSingleton<IUserStore, FileBsonUserStore>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+	.AddCookie(options =>
 	{
-		options.ServiceName = "Dynv6 Automaton";
-	})
-	.ConfigureServices((context, services) =>
-	{
-		services.Configure<Dynv6Options>(context.Configuration.GetSection(Dynv6Options.SectionName));
-		services.Configure<SmtpNotificationOptions>(context.Configuration.GetSection(SmtpNotificationOptions.SectionName));
-		services.PostConfigure<Dynv6Options>(ApplyEnvironmentOverrides);
-		services.AddHttpClient<IpifyClient>();
-		services.AddSingleton<IPublicIpProvider, IpifyPublicIpProvider>();
-		services.AddSingleton<IIpChangeChecker, IpChangeChecker>();
-		services.AddSingleton<IIpChangeManager, IpChangeManager>();
-		services.AddSingleton<IUpdateFailurePolicy, UpdateFailurePolicy>();
-		services.AddSingleton<IUpdateFailureNotifier, SmtpUpdateFailureNotifier>();
-		services.AddHttpClient<IDynv6Client, Dynv6Client>();
-		services.AddSingleton<IUpdateStateStore, FileUpdateStateStore>();
-		services.AddSingleton<IDnsUpdateService, DnsUpdateService>();
-		services.AddHostedService<DnsUpdateWorker>();
+		options.Cookie.Name = "Dynv6.Automaton.Auth";
+		options.Cookie.HttpOnly = true;
+		options.Cookie.SameSite = SameSiteMode.Lax;
+		options.ExpireTimeSpan = TimeSpan.FromDays(7);
+		options.SlidingExpiration = true;
 	});
+builder.Services.AddAuthorization(options =>
+{
+	options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+});
+builder.Services.AddHostedService<DnsUpdateWorker>();
 
-var host = hostBuilder.Build();
+var app = builder.Build();
 
-await host.RunAsync();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapAppRoutes();
+
+await app.RunAsync();
+
+const string EnvironmentPrefix = "DYNV6_UPDATER";
 
 static void ApplyEnvironmentOverrides(Dynv6Options options)
 {
-	if (string.IsNullOrWhiteSpace(options.EnvironmentKey))
-	{
-		return;
-	}
-
-	options.ZoneName = Environment.GetEnvironmentVariable($"{options.EnvironmentKey}__ZONE_NAME") ?? options.ZoneName;
-	options.Key = Environment.GetEnvironmentVariable($"{options.EnvironmentKey}__KEY") ?? options.Key;
+	options.ZoneName = Environment.GetEnvironmentVariable($"{EnvironmentPrefix}__ZONE_NAME") ?? options.ZoneName;
+	options.Key = Environment.GetEnvironmentVariable($"{EnvironmentPrefix}__KEY") ?? options.Key;
 }

@@ -1,7 +1,6 @@
 using Dyndns.Service.Domain;
 using Dyndns.Service.Models;
 using Dyndns.Service.Options;
-using Microsoft.Extensions.Options;
 
 namespace Dyndns.Service.Services;
 
@@ -9,26 +8,28 @@ public sealed class DnsUpdateService : IDnsUpdateService
 {
     private readonly IIpChangeManager _ipChangeManager;
     private readonly ILogger<DnsUpdateService> _logger;
-    private readonly IOptions<Dynv6Options> _options;
+    private readonly IDynv6SettingsService _settingsService;
 
     public DnsUpdateService(
         IIpChangeManager ipChangeManager,
         ILogger<DnsUpdateService> logger,
-        IOptions<Dynv6Options> options)
+        IDynv6SettingsService settingsService)
     {
         _ipChangeManager = ipChangeManager;
         _logger = logger;
-        _options = options;
+        _settingsService = settingsService;
     }
 
-    public async Task<UpdateCycleResult> RunOnceAsync(CancellationToken cancellationToken)
+    public async Task<UpdateCycleResult> RunOnceAsync(CancellationToken cancellationToken, bool forceUpdate = false)
     {
-        var settings = _options.Value;
+        var settings = await _settingsService.GetAsync(cancellationToken);
         ValidateSettings(settings);
 
         var changeCheck = await _ipChangeManager.CheckAsync(cancellationToken);
 
-        if (!changeCheck.HasChanged && !settings.ForceUpdate)
+        var shouldForceUpdate = settings.ForceUpdate || forceUpdate;
+
+        if (!changeCheck.HasChanged && !shouldForceUpdate)
         {
             _logger.LogInformation("Skipping Dynv6 update because the IPv4 address has not changed.");
             return new UpdateCycleResult(false, "IPv4 address unchanged.", changeCheck.CurrentIp, changeCheck.PreviousIp);

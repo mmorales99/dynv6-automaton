@@ -1,28 +1,25 @@
 using Dyndns.Service.Models;
-using Dyndns.Service.Options;
-using Microsoft.Extensions.Options;
 
 namespace Dyndns.Service.Services;
 
 public sealed class IpChangeManager : IIpChangeManager
 {
+    private const string WildcardRecordName = "*";
+
     private readonly IIpChangeChecker _ipChangeChecker;
     private readonly IDynv6Client _dynv6Client;
     private readonly ILogger<IpChangeManager> _logger;
-    private readonly IOptions<Dynv6Options> _options;
     private readonly IUpdateStateStore _stateStore;
 
     public IpChangeManager(
         IIpChangeChecker ipChangeChecker,
         IDynv6Client dynv6Client,
         ILogger<IpChangeManager> logger,
-        IOptions<Dynv6Options> options,
         IUpdateStateStore stateStore)
     {
         _ipChangeChecker = ipChangeChecker;
         _dynv6Client = dynv6Client;
         _logger = logger;
-        _options = options;
         _stateStore = stateStore;
     }
 
@@ -41,16 +38,15 @@ public sealed class IpChangeManager : IIpChangeManager
             throw new ArgumentException("A new IP address is required.", nameof(newIp));
         }
 
-        var settings = _options.Value;
         var zone = await _dynv6Client.GetZoneByNameAsync(zoneName, cancellationToken);
         var records = await _dynv6Client.GetRecordsAsync(zone.Id, cancellationToken);
         var wildcardRecord = records.FirstOrDefault(record =>
-            string.Equals(record.Name, settings.RecordName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(record.Name, WildcardRecordName, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(record.Type, "A", StringComparison.OrdinalIgnoreCase));
 
         if (wildcardRecord is null)
         {
-            throw new InvalidOperationException($"Zone '{zoneName}' does not contain an A record named '{settings.RecordName}'.");
+            throw new InvalidOperationException($"Zone '{zoneName}' does not contain an A record named '{WildcardRecordName}'.");
         }
 
         if (string.Equals(wildcardRecord.Data, newIp, StringComparison.Ordinal))

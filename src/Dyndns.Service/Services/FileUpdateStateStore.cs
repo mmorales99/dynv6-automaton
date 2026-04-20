@@ -1,25 +1,24 @@
-using Dyndns.Service.Options;
-using Microsoft.Extensions.Options;
-
 namespace Dyndns.Service.Services;
 
 public sealed class FileUpdateStateStore : IUpdateStateStore
 {
-    private readonly string _filePath;
+    private readonly IDynv6SettingsService _settingsService;
 
-    public FileUpdateStateStore(IOptions<Dynv6Options> options)
+    public FileUpdateStateStore(IDynv6SettingsService settingsService)
     {
-        _filePath = options.Value.LastPublicIpPath;
+        _settingsService = settingsService;
     }
 
     public async Task<string?> ReadLastKnownIpAsync(CancellationToken cancellationToken)
     {
-        if (!File.Exists(_filePath))
+        var filePath = (await _settingsService.GetAsync(cancellationToken)).LastPublicIpPath;
+
+        if (!File.Exists(filePath))
         {
             return null;
         }
 
-        var contents = await File.ReadAllTextAsync(_filePath, cancellationToken);
+        var contents = await File.ReadAllTextAsync(filePath, cancellationToken);
         var value = contents.Trim();
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
@@ -31,12 +30,13 @@ public sealed class FileUpdateStateStore : IUpdateStateStore
             throw new ArgumentException("A valid IP address is required.", nameof(ipAddress));
         }
 
-        var directoryPath = Path.GetDirectoryName(_filePath);
+        var filePath = (await _settingsService.GetAsync(cancellationToken)).LastPublicIpPath;
+        var directoryPath = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrWhiteSpace(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
         }
 
-        await File.WriteAllTextAsync(_filePath, ipAddress.Trim(), cancellationToken);
+        await File.WriteAllTextAsync(filePath, ipAddress.Trim(), cancellationToken);
     }
 }

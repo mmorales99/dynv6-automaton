@@ -28,12 +28,12 @@ public class IpifyClientTests
     private static IpifyClient CreateClient(HttpMessageHandler handler)
     {
         var httpClient = new HttpClient(handler);
-        var options = Microsoft.Extensions.Options.Options.Create(new Dynv6Options
+        var settings = new InMemoryDynv6SettingsService(new Dynv6Options
         {
             PublicIpUrl = "https://api.ipify.org?format=json"
         });
 
-        return new IpifyClient(httpClient, options);
+        return new IpifyClient(httpClient, settings);
     }
 
     private sealed class IpifyRecordingHttpMessageHandler : HttpMessageHandler

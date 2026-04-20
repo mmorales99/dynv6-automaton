@@ -6,7 +6,6 @@ using System.Text.Json;
 using Dyndns.Service.Models;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
-using Microsoft.Extensions.Options;
 
 namespace Dyndns.Service.Tests;
 
@@ -74,13 +73,13 @@ public class Dynv6ClientTests
     private static Dynv6Client CreateClient(HttpMessageHandler handler)
     {
         var httpClient = new HttpClient(handler);
-        var options = Microsoft.Extensions.Options.Options.Create(new Dynv6Options
+        var settings = new InMemoryDynv6SettingsService(new Dynv6Options
         {
             DyndnsApiUrl = "https://dynv6.com/api/",
             Key = "test-token"
         });
 
-        return new Dynv6Client(httpClient, options);
+        return new Dynv6Client(httpClient, settings);
     }
 
     private sealed class RecordingHttpMessageHandler : HttpMessageHandler

@@ -3,7 +3,6 @@ using Dyndns.Service.Models;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace Dyndns.Service.Tests;
 
@@ -21,7 +20,6 @@ public class IpChangeManagerTests
             checker,
             dynv6Client,
             NullLogger<IpChangeManager>.Instance,
-            Microsoft.Extensions.Options.Options.Create(new Dynv6Options { RecordName = "*" }),
             stateStore);
 
         var changeCheck = await manager.CheckAsync(CancellationToken.None);
