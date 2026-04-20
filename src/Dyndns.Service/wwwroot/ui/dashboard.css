@@ -301,6 +301,21 @@ button:disabled {
   overflow: hidden;
 }
 
+.status-panel.status-bad {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.status-panel.status-good {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.status-panel.status-warn {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+}
+
 .status-panel-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

@@ -4,6 +4,7 @@ const latestStatus = document.getElementById("latestStatus");
 const latestDuration = document.getElementById("latestDuration");
 const latestRunAt = document.getElementById("latestRunAt");
 const latestErrorType = document.getElementById("latestErrorType");
+const latestStatusPanel = document.getElementById("latestStatusPanel");
 const runsBody = document.getElementById("runsBody");
 const sessionBadge = document.getElementById("sessionBadge");
 const logoutButton = document.getElementById("logoutButton");
@@ -306,6 +307,7 @@ function renderHistory(entries) {
       '<tr><td colspan="5" class="muted">No runs recorded yet.</td></tr>';
     latestStatus.textContent = "--";
     latestStatus.className = "status-value status-warn";
+    latestStatusPanel.className = "status-panel status-warn";
     setTextContent(latestMeta, "Launch a run to create the first entry.");
     setTextContent(latestResume, "Launch a run to create the first entry.");
     setTextContent(latestDuration, "--");
@@ -317,6 +319,7 @@ function renderHistory(entries) {
   }
 
   const [latest] = entries;
+  latestStatusPanel.className = `status-panel ${getLatestStatusClass(latest)}`;
   latestStatus.textContent = getLatestStatusText(latest);
   latestStatus.className = `status-value ${getLatestStatusClass(latest)}`;
   setTextContent(
@@ -403,6 +406,7 @@ async function loadHistory() {
     runsBody.innerHTML = `<tr><td colspan="5" class="muted">${escapeHtml(error.message)}</td></tr>`;
     latestStatus.textContent = "--";
     latestStatus.className = "status-value status-warn";
+    latestStatusPanel.className = "status-panel status-warn";
     setTextContent(latestMeta, error.message);
     setTextContent(latestResume, "History could not be loaded.");
     setTextContent(latestDuration, "--");
