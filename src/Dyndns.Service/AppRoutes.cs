@@ -123,6 +123,7 @@ internal static class AppRoutes
     private static async Task StreamRunsAsync(
         HttpContext context,
         IUpdateRunBroadcaster broadcaster,
+        ILogger<Program> logger,
         CancellationToken cancellationToken)
     {
         context.Response.Headers.CacheControl = "no-cache";
@@ -132,19 +133,28 @@ internal static class AppRoutes
 
         await context.Response.StartAsync(cancellationToken);
 
-        await foreach (var entry in broadcaster.SubscribeAsync(cancellationToken))
+        try
         {
-            var payload = JsonSerializer.Serialize(new
+            await foreach (var entry in broadcaster.SubscribeAsync(cancellationToken))
             {
-                entry.Id,
-                entry.StartedAt,
-                entry.FinishedAt,
-                entry.Trigger
-            });
+                var payload = JsonSerializer.Serialize(new
+                {
+                    entry.Id,
+                    entry.StartedAt,
+                    entry.FinishedAt,
+                    entry.Trigger
+                });
 
-            await context.Response.WriteAsync("event: run-updated\n", cancellationToken);
-            await context.Response.WriteAsync($"data: {payload}\n\n", cancellationToken);
-            await context.Response.Body.FlushAsync(cancellationToken);
+                await context.Response.WriteAsync("event: run-updated\n", cancellationToken);
+                await context.Response.WriteAsync($"data: {payload}\n\n", cancellationToken);
+                await context.Response.Body.FlushAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException exception)
+        {
+            // dont log the exception unless debug
+            logger.LogDebug(exception, "SSE client connection closed for /api/runs/stream.");
+            logger.LogInformation("SSE client connection closed for /api/runs/stream.");
         }
     }
 

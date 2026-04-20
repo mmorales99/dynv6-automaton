@@ -78,3 +78,28 @@ If the update flow fails, the service now sends an email notification and switch
 - Failure emails are sent every hour during daytime and every 8 hours during nighttime.
 
 Configure SMTP settings under the `Notifications` section in `src/Dyndns.Service/appsettings.json`.
+
+## Container
+
+The service can be packaged as a Linux container with Podman using the root-level `Containerfile`.
+
+Build the image:
+
+```bash
+podman build -t dynv6-automaton -f Containerfile .
+```
+
+Run the container with a writable data volume:
+
+```bash
+podman run --rm -p 8080:8080 -v dynv6-data:/data dynv6-automaton
+```
+
+The container listens on port `8080` and stores its runtime files in `/data`:
+
+- `/data/users.bson`
+- `/data/last-public-ip.txt`
+- `/data/run-history.jsonl`
+- `/data/dynv6-runtime-settings.json`
+
+If you want to use bind mounts instead of a named volume, mount any writable folder to `/data` and keep the same file paths.

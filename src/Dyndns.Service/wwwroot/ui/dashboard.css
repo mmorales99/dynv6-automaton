@@ -347,6 +347,10 @@ button:disabled {
   text-align: right;
 }
 
+.hidden {
+  visibility: hidden;
+}
+
 .status-item-left {
   justify-content: flex-start;
   text-align: left;

@@ -4,6 +4,7 @@ const latestStatus = document.getElementById("latestStatus");
 const latestDuration = document.getElementById("latestDuration");
 const latestRunAt = document.getElementById("latestRunAt");
 const latestErrorType = document.getElementById("latestErrorType");
+const latestErrorTypeItem = document.getElementById("latestErrorTypeItem");
 const latestStatusPanel = document.getElementById("latestStatusPanel");
 const runsBody = document.getElementById("runsBody");
 const sessionBadge = document.getElementById("sessionBadge");
@@ -35,6 +36,12 @@ let historyRefreshQueued = false;
 function setTextContent(element, value) {
   if (element) {
     element.textContent = value;
+  }
+}
+
+function setHidden(element, hidden) {
+  if (element) {
+    element.classList.toggle("hidden", hidden);
   }
 }
 
@@ -317,7 +324,7 @@ function renderHistory(entries) {
     setTextContent(latestRunAt, "--");
     setTextContent(latestErrorType, "--");
     latestErrorType.className = "status-value status-warn";
-    latestErrorType.hidden = true;
+    setHidden(latestErrorTypeItem, true);
     return;
   }
 
@@ -334,7 +341,7 @@ function renderHistory(entries) {
   setTextContent(latestRunAt, formatDate(latest.startedAt));
   setTextContent(latestErrorType, getLatestErrorType(latest));
   latestErrorType.className = `status-value ${getLatestErrorTypeClass(latest)}`;
-  latestErrorType.hidden = latest.succeeded;
+  setHidden(latestErrorTypeItem, latest.succeeded);
 
   runsBody.innerHTML = entries
     .map((entry) => {
@@ -416,7 +423,7 @@ async function loadHistory() {
     setTextContent(latestRunAt, "--");
     setTextContent(latestErrorType, "--");
     latestErrorType.className = "status-value status-warn";
-    latestErrorType.hidden = true;
+    setHidden(latestErrorTypeItem, true);
     openDetailsKey = null;
   }
 }
