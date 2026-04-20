@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+.github/
+installer/
+**/*.user
+**/*.suo
+test-output.txt
+README.md
+LICENSE.MD

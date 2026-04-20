@@ -1,0 +1,24 @@
+<form class="auth-form" id="setupForm">
+  <div class="field">
+    <label for="adminPassword">Admin password</label>
+    <input
+      id="adminPassword"
+      name="adminPassword"
+      type="password"
+      autocomplete="new-password"
+      required
+    />
+  </div>
+  <div class="field">
+    <label for="viewerPassword">Viewer password</label>
+    <input
+      id="viewerPassword"
+      name="viewerPassword"
+      type="password"
+      autocomplete="new-password"
+      required
+    />
+  </div>
+  <button class="primary" type="submit">Create users</button>
+  <div class="feedback" id="feedback">{{ERROR_MESSAGE}}</div>
+</form>

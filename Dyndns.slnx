@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dyndns.Service/Dyndns.Service.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Dyndns.Service.Tests/Dyndns.Service.Tests.csproj" />
+  </Folder>
+</Solution>

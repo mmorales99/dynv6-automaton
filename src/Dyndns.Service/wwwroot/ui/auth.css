@@ -1,0 +1,131 @@
+:root {
+  color-scheme: dark;
+  --bg: #101319;
+  --panel: rgba(16, 19, 25, 0.86);
+  --panel-border: rgba(255, 255, 255, 0.09);
+  --text: #eef1f7;
+  --muted: #a8b0be;
+  --accent: #f59e0b;
+  --good: #22c55e;
+  --line: rgba(255, 255, 255, 0.08);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(245, 158, 11, 0.18),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(251, 113, 133, 0.16),
+      transparent 24%
+    ),
+    linear-gradient(180deg, #171b24 0%, #101319 100%);
+  padding: 24px;
+}
+
+.card {
+  width: min(540px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  padding: 28px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  line-height: 0.95;
+}
+
+.lede {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  line-height: 1.5;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #1a1204;
+  background: linear-gradient(135deg, #fbbf24, #fb7185);
+  box-shadow: 0 12px 30px rgba(251, 191, 36, 0.25);
+}
+
+.feedback {
+  min-height: 1.25rem;
+  color: #b7f7c9;
+  font-size: 0.9rem;
+}
+
+.feedback.error {
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.footer {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
