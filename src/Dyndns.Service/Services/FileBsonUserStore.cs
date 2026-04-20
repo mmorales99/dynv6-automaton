@@ -7,12 +7,15 @@ namespace Dyndns.Service.Services;
 
 public sealed class FileBsonUserStore : IUserStore
 {
+    private const int CurrentHashVersion = 2;
     private const int PasswordIterations = 100_000;
     private const int SaltSize = 16;
     private const int HashSize = 32;
     private readonly string _usersFilePath;
+    private readonly string _passwordPepper;
+    private const string HashVersionField = "hashVersion";
 
-    public FileBsonUserStore(string? usersFilePath = null)
+    public FileBsonUserStore(string? usersFilePath = null, string? passwordPepper = null)
     {
         _usersFilePath = string.IsNullOrWhiteSpace(usersFilePath)
             ? Path.Combine(
@@ -20,9 +23,11 @@ public sealed class FileBsonUserStore : IUserStore
                 "Dyndns",
                 "users.bson")
             : usersFilePath;
+        _passwordPepper = passwordPepper ?? string.Empty;
     }
 
     public bool IsInitialized => File.Exists(_usersFilePath);
+    private bool HasPepper => !string.IsNullOrWhiteSpace(_passwordPepper);
 
     public async Task InitializeAsync(string adminPassword, string viewerPassword, CancellationToken cancellationToken)
     {
@@ -36,7 +41,7 @@ public sealed class FileBsonUserStore : IUserStore
 
         var document = new BsonDocument
         {
-            { "version", 1 },
+            { "version", HasPepper ? CurrentHashVersion : 1 },
             { "users", new BsonArray
                 {
                     CreateUserDocument("viewer", viewerPassword, "none"),
@@ -56,28 +61,35 @@ public sealed class FileBsonUserStore : IUserStore
         File.SetAttributes(_usersFilePath, File.GetAttributes(_usersFilePath) | FileAttributes.ReadOnly);
     }
 
-    public Task<AuthenticatedUser?> AuthenticateAsync(string userName, string password, CancellationToken cancellationToken)
+    public async Task<AuthenticatedUser?> AuthenticateAsync(string userName, string password, CancellationToken cancellationToken)
     {
         if (!IsInitialized)
         {
-            return Task.FromResult<AuthenticatedUser?>(null);
+            return null;
         }
 
-        var users = LoadUsers();
+        var document = LoadDocument();
+        var users = ReadUsers(document);
         var user = users.FirstOrDefault(candidate => string.Equals(candidate.Name, userName, StringComparison.OrdinalIgnoreCase));
         if (user is null)
         {
-            return Task.FromResult<AuthenticatedUser?>(null);
+            return null;
         }
 
-        var verified = PasswordHasher.Verify(password, user.PasswordHash, user.Salt, user.Iterations);
-        return Task.FromResult(verified ? new AuthenticatedUser(user.Name, user.Roles) : null);
+        var verified = PasswordHasher.Verify(password, user.PasswordHash, user.Salt, user.Iterations, user.HashVersion, _passwordPepper);
+        if (verified && user.HashVersion < CurrentHashVersion && !string.IsNullOrWhiteSpace(_passwordPepper))
+        {
+            UpgradeUserHash(document, user, password);
+            await SaveDocumentAsync(document, cancellationToken);
+        }
+
+        return verified ? new AuthenticatedUser(user.Name, user.Roles) : null;
     }
 
-    private static BsonDocument CreateUserDocument(string name, string password, string roles)
+    private BsonDocument CreateUserDocument(string name, string password, string roles)
     {
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
-        var hash = PasswordHasher.Hash(password, salt, PasswordIterations);
+        var hash = PasswordHasher.Hash(password, salt, PasswordIterations, _passwordPepper);
 
         return new BsonDocument
         {
@@ -85,23 +97,65 @@ public sealed class FileBsonUserStore : IUserStore
             { "passwordHash", Convert.ToBase64String(hash) },
             { "salt", Convert.ToBase64String(salt) },
             { "iterations", PasswordIterations },
+            { "hashVersion", HasPepper ? CurrentHashVersion : 1 },
             { "roles", roles }
         };
     }
 
-    private IReadOnlyList<UserRecord> LoadUsers()
+    private BsonDocument LoadDocument()
     {
-        var document = BsonSerializer.Deserialize<BsonDocument>(File.ReadAllBytes(_usersFilePath));
+        return BsonSerializer.Deserialize<BsonDocument>(File.ReadAllBytes(_usersFilePath));
+    }
+
+    private static IReadOnlyList<UserRecord> ReadUsers(BsonDocument document)
+    {
         var users = document["users"].AsBsonArray;
 
         return users
+            .Select(user => user.AsBsonDocument)
             .Select(user => new UserRecord(
                 user["name"].AsString,
                 user["passwordHash"].AsString,
                 user["salt"].AsString,
                 user["iterations"].ToInt32(),
-                user["roles"].AsString))
+                user.Contains(HashVersionField) ? user[HashVersionField].ToInt32() : 1,
+                user["roles"].AsString,
+                user))
             .ToArray();
+    }
+
+    private async Task SaveDocumentAsync(BsonDocument document, CancellationToken cancellationToken)
+    {
+        var directoryPath = Path.GetDirectoryName(_usersFilePath);
+        if (!string.IsNullOrWhiteSpace(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        if (File.Exists(_usersFilePath))
+        {
+            File.SetAttributes(_usersFilePath, FileAttributes.Normal);
+        }
+
+        try
+        {
+            await File.WriteAllBytesAsync(_usersFilePath, document.ToBson(), cancellationToken);
+        }
+        finally
+        {
+            if (File.Exists(_usersFilePath))
+            {
+                File.SetAttributes(_usersFilePath, File.GetAttributes(_usersFilePath) | FileAttributes.ReadOnly);
+            }
+        }
+    }
+
+    private void UpgradeUserHash(BsonDocument document, UserRecord user, string password)
+    {
+        var updatedHash = PasswordHasher.Hash(password, Convert.FromBase64String(user.Salt), user.Iterations, _passwordPepper);
+        user.Document["passwordHash"] = Convert.ToBase64String(updatedHash);
+        user.Document[HashVersionField] = CurrentHashVersion;
+        document["version"] = CurrentHashVersion;
     }
 
     private static void ValidatePassword(string password, string parameterName)
@@ -112,16 +166,19 @@ public sealed class FileBsonUserStore : IUserStore
         }
     }
 
-    private sealed record UserRecord(string Name, string PasswordHash, string Salt, int Iterations, string Roles);
+    private sealed record UserRecord(string Name, string PasswordHash, string Salt, int Iterations, int HashVersion, string Roles, BsonDocument Document);
 
     private static class PasswordHasher
     {
-        public static byte[] Hash(string password, byte[] salt, int iterations)
-            => Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, HashSize);
-
-        public static bool Verify(string password, string passwordHash, string salt, int iterations)
+        public static byte[] Hash(string password, byte[] salt, int iterations, string pepper)
         {
-            var computed = Hash(password, Convert.FromBase64String(salt), iterations);
+            var secret = string.IsNullOrEmpty(pepper) ? password : password + pepper;
+            return Rfc2898DeriveBytes.Pbkdf2(secret, salt, iterations, HashAlgorithmName.SHA256, HashSize);
+        }
+
+        public static bool Verify(string password, string passwordHash, string salt, int iterations, int hashVersion, string pepper)
+        {
+            var computed = Hash(password, Convert.FromBase64String(salt), iterations, hashVersion >= CurrentHashVersion && !string.IsNullOrWhiteSpace(pepper) ? pepper : string.Empty);
             return CryptographicOperations.FixedTimeEquals(computed, Convert.FromBase64String(passwordHash));
         }
     }

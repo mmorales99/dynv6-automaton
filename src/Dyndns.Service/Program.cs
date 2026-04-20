@@ -37,7 +37,9 @@ builder.Services.AddSingleton<IUpdateRunHistoryStore, FileUpdateRunHistoryStore>
 builder.Services.AddSingleton<IUpdateRunBroadcaster, UpdateRunBroadcaster>();
 builder.Services.AddSingleton<IDnsUpdateService, DnsUpdateService>();
 builder.Services.AddSingleton<IUpdateCycleRunner, UpdateCycleRunner>();
-builder.Services.AddSingleton<IUserStore>(_ => new FileBsonUserStore(Environment.GetEnvironmentVariable("DYNV6_UPDATER__USERS_FILE_PATH")));
+builder.Services.AddSingleton<IUserStore>(_ => new FileBsonUserStore(
+	Environment.GetEnvironmentVariable("DYNV6_UPDATER__USERS_FILE_PATH"),
+	Environment.GetEnvironmentVariable("DYNV6_UPDATER__PASSWORD_PEPPER")));
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
 	.AddCookie(options =>
 	{

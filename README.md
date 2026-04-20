@@ -4,6 +4,7 @@ It supports configuration via appsettings.json.
 
 - ForceUpdate will force the ip update every run.
 - Environment variables are read from the fixed prefix `DYNV6_UPDATER`. Example: `DYNV6_UPDATER__ZONE_NAME` and `DYNV6_UPDATER__KEY`.
+- PasswordPepper strengthens the stored user passwords. Set it with `DYNV6_UPDATER__PASSWORD_PEPPER` and keep it secret.
 - LastPublicIpPath will overwrite the default save location. It will save only the last correct IP.
 - RunHistoryPath stores the last run history used by the web dashboard.
 - PublicIpProviders will give the program a list of public ip value providers, they have to return a JSON value as {"ip": "A.N.Y.IP"}
@@ -103,3 +104,5 @@ The container listens on port `8080` and stores its runtime files in `/data`:
 - `/data/dynv6-runtime-settings.json`
 
 If you want to use bind mounts instead of a named volume, mount any writable folder to `/data` and keep the same file paths.
+
+When running in a container, set `DYNV6_UPDATER__PASSWORD_PEPPER` to a long random secret.
