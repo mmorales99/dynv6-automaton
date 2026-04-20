@@ -15,4 +15,10 @@ public sealed record Dynv6Zone
 
     [JsonPropertyName("ipv6prefix")]
     public string? Ipv6Prefix { get; init; }
+
+    [JsonPropertyName("createdAt")]
+    public DateTimeOffset? CreatedAt { get; init; }
+
+    [JsonPropertyName("updatedAt")]
+    public DateTimeOffset? UpdatedAt { get; init; }
 }

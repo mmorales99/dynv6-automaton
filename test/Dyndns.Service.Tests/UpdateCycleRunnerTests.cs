@@ -11,7 +11,8 @@ public class UpdateCycleRunnerTests
     {
         var updateService = new FakeDnsUpdateService(() => Task.FromResult(new UpdateCycleResult(true, "Updated", "203.0.113.10", "198.51.100.25")));
         var historyStore = new FakeUpdateRunHistoryStore();
-        var runner = new UpdateCycleRunner(updateService, historyStore, NullLogger<UpdateCycleRunner>.Instance);
+        var broadcaster = new FakeUpdateRunBroadcaster();
+        var runner = new UpdateCycleRunner(updateService, historyStore, broadcaster, NullLogger<UpdateCycleRunner>.Instance);
 
         var entry = await runner.RunAsync("manual", CancellationToken.None);
 
@@ -20,6 +21,7 @@ public class UpdateCycleRunnerTests
         Assert.Equal("manual", entry.Trigger);
         Assert.Single(historyStore.Entries);
         Assert.Equal("Updated", historyStore.Entries[0].Message);
+        Assert.Single(broadcaster.PublishedEntries);
     }
 
     [Fact]
@@ -27,7 +29,8 @@ public class UpdateCycleRunnerTests
     {
         var updateService = new FakeDnsUpdateService(() => throw new InvalidOperationException("Boom"));
         var historyStore = new FakeUpdateRunHistoryStore();
-        var runner = new UpdateCycleRunner(updateService, historyStore, NullLogger<UpdateCycleRunner>.Instance);
+        var broadcaster = new FakeUpdateRunBroadcaster();
+        var runner = new UpdateCycleRunner(updateService, historyStore, broadcaster, NullLogger<UpdateCycleRunner>.Instance);
 
         var entry = await runner.RunAsync("manual", CancellationToken.None);
 
@@ -37,6 +40,7 @@ public class UpdateCycleRunnerTests
         Assert.Contains("Unexpected process error", entry.ErrorSummary ?? string.Empty);
         Assert.Single(historyStore.Entries);
         Assert.False(historyStore.Entries[0].Succeeded);
+        Assert.Single(broadcaster.PublishedEntries);
     }
 
     [Fact]
@@ -44,13 +48,15 @@ public class UpdateCycleRunnerTests
     {
         var updateService = new FakeDnsUpdateService(() => throw new TaskCanceledException("The request timed out."));
         var historyStore = new FakeUpdateRunHistoryStore();
-        var runner = new UpdateCycleRunner(updateService, historyStore, NullLogger<UpdateCycleRunner>.Instance);
+        var broadcaster = new FakeUpdateRunBroadcaster();
+        var runner = new UpdateCycleRunner(updateService, historyStore, broadcaster, NullLogger<UpdateCycleRunner>.Instance);
 
         var entry = await runner.RunAsync("manual", CancellationToken.None);
 
         Assert.False(entry.Succeeded);
         Assert.Equal("Unable to get IP: the provider timed out.", entry.ErrorSummary);
         Assert.Contains("timed out", entry.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(broadcaster.PublishedEntries);
     }
 
     [Fact]
@@ -58,13 +64,15 @@ public class UpdateCycleRunnerTests
     {
         var updateService = new FakeDnsUpdateService(() => Task.FromResult(new UpdateCycleResult(true, "Updated", "203.0.113.10", "198.51.100.25")));
         var historyStore = new FakeUpdateRunHistoryStore();
-        var runner = new UpdateCycleRunner(updateService, historyStore, NullLogger<UpdateCycleRunner>.Instance);
+        var broadcaster = new FakeUpdateRunBroadcaster();
+        var runner = new UpdateCycleRunner(updateService, historyStore, broadcaster, NullLogger<UpdateCycleRunner>.Instance);
 
         var entry = await runner.RunAsync("manual", CancellationToken.None, forceUpdate: true);
 
         Assert.True(entry.Succeeded);
         Assert.True(entry.Updated);
         Assert.Equal("Updated", entry.Message);
+        Assert.Single(broadcaster.PublishedEntries);
     }
 
     private sealed class FakeDnsUpdateService : IDnsUpdateService
@@ -92,5 +100,23 @@ public class UpdateCycleRunnerTests
 
         public Task<IReadOnlyList<UpdateRunEntry>> ReadRecentAsync(int maxEntries, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<UpdateRunEntry>>(Entries.TakeLast(maxEntries).Reverse().ToArray());
+    }
+
+    private sealed class FakeUpdateRunBroadcaster : IUpdateRunBroadcaster
+    {
+        public List<UpdateRunEntry> PublishedEntries { get; } = [];
+
+        public void Publish(UpdateRunEntry entry)
+        {
+            PublishedEntries.Add(entry);
+        }
+
+        public IAsyncEnumerable<UpdateRunEntry> SubscribeAsync(CancellationToken cancellationToken)
+            => EmptyAsyncEnumerable();
+
+        private static async IAsyncEnumerable<UpdateRunEntry> EmptyAsyncEnumerable()
+        {
+            yield break;
+        }
     }
 }

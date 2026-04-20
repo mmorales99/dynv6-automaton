@@ -29,5 +29,5 @@ public sealed class Dynv6Options
 
     public string PublicIpUrl { get; set; } = "https://api.ipify.org?format=json";
 
-    public string DyndnsApiUrl { get; set; } = "https://dynv6.com/api/";
+    public string DyndnsApiUrl { get; set; } = "https://dynv6.com/api/v2/";
 }

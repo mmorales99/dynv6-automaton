@@ -7,15 +7,18 @@ public sealed class UpdateCycleRunner : IUpdateCycleRunner
     private readonly IDnsUpdateService _dnsUpdateService;
     private readonly ILogger<UpdateCycleRunner> _logger;
     private readonly IUpdateRunHistoryStore _historyStore;
+    private readonly IUpdateRunBroadcaster _runBroadcaster;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     public UpdateCycleRunner(
         IDnsUpdateService dnsUpdateService,
         IUpdateRunHistoryStore historyStore,
+        IUpdateRunBroadcaster runBroadcaster,
         ILogger<UpdateCycleRunner> logger)
     {
         _dnsUpdateService = dnsUpdateService;
         _historyStore = historyStore;
+        _runBroadcaster = runBroadcaster;
         _logger = logger;
     }
 
@@ -93,7 +96,12 @@ public sealed class UpdateCycleRunner : IUpdateCycleRunner
                 _logger.LogError(exception, "Dynv6 update cycle failed.");
             }
 
-            await TryAppendAsync(entry, cancellationToken);
+            var appended = await TryAppendAsync(entry, cancellationToken);
+            if (appended)
+            {
+                _runBroadcaster.Publish(entry);
+            }
+
             return entry;
         }
         finally
@@ -105,15 +113,17 @@ public sealed class UpdateCycleRunner : IUpdateCycleRunner
     public Task<IReadOnlyList<UpdateRunEntry>> ReadRecentRunsAsync(int maxEntries, CancellationToken cancellationToken)
         => _historyStore.ReadRecentAsync(maxEntries, cancellationToken);
 
-    private async Task TryAppendAsync(UpdateRunEntry entry, CancellationToken cancellationToken)
+    private async Task<bool> TryAppendAsync(UpdateRunEntry entry, CancellationToken cancellationToken)
     {
         try
         {
             await _historyStore.AppendAsync(entry, cancellationToken);
+            return true;
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Dynv6 run history could not be saved.");
+            return false;
         }
     }
 
@@ -132,6 +142,11 @@ public sealed class UpdateCycleRunner : IUpdateCycleRunner
         if (exception is InvalidOperationException invalidOperationException)
         {
             var message = invalidOperationException.Message;
+
+            if (message.Contains("was not found or is not accessible", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Dynv6 zone was not found or is not accessible.";
+            }
 
             if (message.Contains("request failed", StringComparison.OrdinalIgnoreCase))
             {

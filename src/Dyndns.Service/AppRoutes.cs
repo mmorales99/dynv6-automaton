@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Dyndns.Service.Models;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
@@ -45,6 +46,7 @@ internal static class AppRoutes
         app.MapGet("/api/me", GetSessionAsync).RequireAuthorization();
         app.MapGet("/api/runs", async (IUpdateCycleRunner runner, CancellationToken cancellationToken)
             => Results.Ok(await runner.ReadRecentRunsAsync(50, cancellationToken))).RequireAuthorization();
+        app.MapGet("/api/runs/stream", StreamRunsAsync).RequireAuthorization();
     }
 
     private static void MapAdminRoutes(WebApplication app)
@@ -117,6 +119,34 @@ internal static class AppRoutes
 
             return Results.Ok(await runner.RunAsync("manual", cancellationToken, request.ForceUpdate && user.IsAdmin));
         }
+
+    private static async Task StreamRunsAsync(
+        HttpContext context,
+        IUpdateRunBroadcaster broadcaster,
+        CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "no-cache";
+        context.Response.Headers.Connection = "keep-alive";
+        context.Response.Headers["X-Accel-Buffering"] = "no";
+        context.Response.ContentType = "text/event-stream";
+
+        await context.Response.StartAsync(cancellationToken);
+
+        await foreach (var entry in broadcaster.SubscribeAsync(cancellationToken))
+        {
+            var payload = JsonSerializer.Serialize(new
+            {
+                entry.Id,
+                entry.StartedAt,
+                entry.FinishedAt,
+                entry.Trigger
+            });
+
+            await context.Response.WriteAsync("event: run-updated\n", cancellationToken);
+            await context.Response.WriteAsync($"data: {payload}\n\n", cancellationToken);
+            await context.Response.Body.FlushAsync(cancellationToken);
+        }
+    }
 
     private static IResult HandleRoot(IUserStore userStore, IWebHostEnvironment environment)
     {

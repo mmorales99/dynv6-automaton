@@ -38,7 +38,10 @@ public sealed class IpChangeManager : IIpChangeManager
             throw new ArgumentException("A new IP address is required.", nameof(newIp));
         }
 
+        _logger.LogInformation("Looking up Dynv6 zone {ZoneName}.", zoneName);
         var zone = await _dynv6Client.GetZoneByNameAsync(zoneName, cancellationToken);
+        _logger.LogDebug("Found Dynv6 zone {ZoneName} with id {ZoneId}.", zone.Name, zone.Id);
+
         var records = await _dynv6Client.GetRecordsAsync(zone.Id, cancellationToken);
         var wildcardRecord = records.FirstOrDefault(record =>
             string.Equals(record.Name, WildcardRecordName, StringComparison.OrdinalIgnoreCase) &&
@@ -46,25 +49,42 @@ public sealed class IpChangeManager : IIpChangeManager
 
         if (wildcardRecord is null)
         {
+            _logger.LogWarning("Dynv6 zone {ZoneName} does not contain an A record named {RecordName}.", zoneName, WildcardRecordName);
             throw new InvalidOperationException($"Zone '{zoneName}' does not contain an A record named '{WildcardRecordName}'.");
         }
 
         if (string.Equals(wildcardRecord.Data, newIp, StringComparison.Ordinal))
         {
+            _logger.LogDebug(
+                "Dynv6 wildcard record for zone {ZoneName} already matches the current IPv4 address {CurrentIp}.",
+                zoneName,
+                newIp);
             await _stateStore.SaveLastKnownIpAsync(newIp, cancellationToken);
-            _logger.LogInformation("Dynv6 wildcard record already matches the current IPv4 address.");
             return new UpdateCycleResult(false, "Dynv6 record already matched the current IPv4 address.", newIp, wildcardRecord.Data);
         }
 
+        _logger.LogInformation(
+            "Updating Dynv6 wildcard record for zone {ZoneName} from {PreviousIp} to {CurrentIp}.",
+            zoneName,
+            wildcardRecord.Data,
+            newIp);
         var updatedRecord = await _dynv6Client.UpdateRecordAsync(
             zone.Id,
             wildcardRecord.Id,
             wildcardRecord.ToUpdateRequest(newIp),
             cancellationToken);
 
+        await _dynv6Client.UpdateZoneAsync(
+            zone.Id,
+            new Dynv6ZoneUpdateRequest
+            {
+                Ipv4Address = newIp
+            },
+            cancellationToken);
+
         await _stateStore.SaveLastKnownIpAsync(newIp, cancellationToken);
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Updated Dynv6 record {RecordName} in zone {ZoneName} to {CurrentIpv4Address}.",
             updatedRecord.Name,
             zone.Name,

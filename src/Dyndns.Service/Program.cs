@@ -2,12 +2,21 @@ using Dyndns.Service;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseWindowsService(options =>
 {
 	options.ServiceName = "Dynv6 Automaton";
+});
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+	loggerConfiguration
+		.ReadFrom.Configuration(context.Configuration)
+		.ReadFrom.Services(services)
+		.Enrich.FromLogContext();
 });
 
 builder.WebHost.UseUrls(builder.Configuration["WebUi:Url"] ?? "http://localhost:5050");
@@ -25,6 +34,7 @@ builder.Services.AddHttpClient<IDynv6Client, Dynv6Client>();
 builder.Services.AddSingleton<IDynv6SettingsService, FileDynv6SettingsService>();
 builder.Services.AddSingleton<IUpdateStateStore, FileUpdateStateStore>();
 builder.Services.AddSingleton<IUpdateRunHistoryStore, FileUpdateRunHistoryStore>();
+builder.Services.AddSingleton<IUpdateRunBroadcaster, UpdateRunBroadcaster>();
 builder.Services.AddSingleton<IDnsUpdateService, DnsUpdateService>();
 builder.Services.AddSingleton<IUpdateCycleRunner, UpdateCycleRunner>();
 builder.Services.AddSingleton<IUserStore, FileBsonUserStore>();
@@ -46,6 +56,7 @@ builder.Services.AddHostedService<DnsUpdateWorker>();
 var app = builder.Build();
 
 app.UseStaticFiles();
+app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 

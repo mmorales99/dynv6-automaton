@@ -6,6 +6,7 @@ using System.Text.Json;
 using Dyndns.Service.Models;
 using Dyndns.Service.Options;
 using Dyndns.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Dyndns.Service.Tests;
 
@@ -15,10 +16,15 @@ public class Dynv6ClientTests
     public async Task GetZoneByNameAsync_SendsBearerAuthenticatedRequest()
     {
         var handler = new RecordingHttpMessageHandler(
-            _ => new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = JsonContent.Create(new Dynv6Zone { Id = 42, Name = "example.com" })
-            });
+            request => request.RequestUri!.ToString().EndsWith("/zones", StringComparison.Ordinal)
+                ? new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new[]
+                    {
+                        new Dynv6Zone { Id = 42, Name = "example.com" }
+                    })
+                }
+                : throw new InvalidOperationException($"Unexpected request to {request.RequestUri}"));
 
         var client = CreateClient(handler);
 
@@ -27,9 +33,62 @@ public class Dynv6ClientTests
         Assert.Equal(42, zone.Id);
         Assert.Equal("example.com", zone.Name);
         Assert.Equal(HttpMethod.Get, handler.LastRequest!.Method);
-        Assert.Equal("https://dynv6.com/api/zones/by-name/example.com", handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal("https://dynv6.com/api/zones", handler.LastRequest.RequestUri!.ToString());
         Assert.Equal("Bearer", handler.LastRequest.Headers.Authorization?.Scheme);
         Assert.Equal("test-token", handler.LastRequest.Headers.Authorization?.Parameter);
+    }
+
+    [Fact]
+    public async Task GetZoneByNameAsync_ThrowsClearMessageWhenZoneIsMissing()
+    {
+        var handler = new RecordingHttpMessageHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[]
+                {
+                    new Dynv6Zone { Id = 1, Name = "other.example.com" }
+                })
+            });
+
+        var client = CreateClient(handler);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => client.GetZoneByNameAsync("example.com", CancellationToken.None));
+
+        Assert.Contains("zone 'example.com' was not found or is not accessible", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateZoneAsync_SendsPatchRequestWithUpdatedIp()
+    {
+        string? requestBody = null;
+
+        var handler = new RecordingHttpMessageHandler(async request =>
+        {
+            requestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new Dynv6Zone
+                {
+                    Id = 42,
+                    Name = "example.com",
+                    Ipv4Address = "203.0.113.10"
+                })
+            };
+        });
+
+        var client = CreateClient(handler);
+
+        var zone = await client.UpdateZoneAsync(42, new Dynv6ZoneUpdateRequest
+        {
+            Ipv4Address = "203.0.113.10"
+        }, CancellationToken.None);
+
+        Assert.Equal(42, zone.Id);
+        Assert.Equal(HttpMethod.Patch, handler.LastRequest!.Method);
+        Assert.Equal("https://dynv6.com/api/zones/42", handler.LastRequest.RequestUri!.ToString());
+        Assert.NotNull(requestBody);
+        Assert.Contains("\"ipv4address\":\"203.0.113.10\"", requestBody);
     }
 
     [Fact]
@@ -79,7 +138,7 @@ public class Dynv6ClientTests
             Key = "test-token"
         });
 
-        return new Dynv6Client(httpClient, settings);
+        return new Dynv6Client(httpClient, NullLogger<Dynv6Client>.Instance, settings);
     }
 
     private sealed class RecordingHttpMessageHandler : HttpMessageHandler

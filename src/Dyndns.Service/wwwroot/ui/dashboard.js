@@ -28,6 +28,9 @@ const lastPublicIpPathInput = document.getElementById("lastPublicIpPath");
 const runtimeSettingsPathInput = document.getElementById("runtimeSettingsPath");
 const runHistoryPathInput = document.getElementById("runHistoryPath");
 let openDetailsKey = null;
+let historyEventSource = null;
+let historyRefreshInFlight = null;
+let historyRefreshQueued = false;
 
 function setTextContent(element, value) {
   if (element) {
@@ -418,6 +421,37 @@ async function loadHistory() {
   }
 }
 
+async function refreshHistoryFromSignal() {
+  if (historyRefreshInFlight) {
+    historyRefreshQueued = true;
+    return historyRefreshInFlight;
+  }
+
+  historyRefreshInFlight = loadHistory();
+
+  try {
+    await historyRefreshInFlight;
+  } finally {
+    historyRefreshInFlight = null;
+
+    if (historyRefreshQueued) {
+      historyRefreshQueued = false;
+      void refreshHistoryFromSignal();
+    }
+  }
+}
+
+function startHistoryStream() {
+  if (historyEventSource) {
+    return;
+  }
+
+  historyEventSource = new EventSource("/api/runs/stream");
+  historyEventSource.addEventListener("run-updated", () => {
+    void refreshHistoryFromSignal();
+  });
+}
+
 async function runNow() {
   const password = globalThis.prompt("Enter the password to run the update");
   if (password === null) {
@@ -466,7 +500,7 @@ async function runNow() {
       access.isAdmin && forceUpdate
         ? "Force update started."
         : "Update started.";
-    await loadHistory();
+    await refreshHistoryFromSignal();
   } catch (error) {
     runFeedback.className = "feedback error";
     runFeedback.textContent = error.message;
@@ -495,7 +529,7 @@ logoutButton.addEventListener("click", async () => {
 try {
   await loadSession();
   await loadHistory();
+  startHistoryStream();
 } catch (error) {
   sessionBadge.textContent = error.message;
 }
-setInterval(loadHistory, 15000);

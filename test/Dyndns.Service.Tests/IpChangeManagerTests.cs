@@ -30,6 +30,7 @@ public class IpChangeManagerTests
         Assert.True(result.Updated);
         Assert.Equal("example.com", dynv6Client.LastZoneName);
         Assert.Equal("203.0.113.10", dynv6Client.LastUpdatedIp);
+        Assert.Equal("203.0.113.10", dynv6Client.LastUpdatedZoneIp);
         Assert.Equal("203.0.113.10", stateStore.LastSavedIp);
     }
 
@@ -52,6 +53,8 @@ public class IpChangeManagerTests
 
         public string? LastUpdatedIp { get; private set; }
 
+        public string? LastUpdatedZoneIp { get; private set; }
+
         public Task<Dynv6Zone> GetZoneByNameAsync(string zoneName, CancellationToken cancellationToken)
         {
             LastZoneName = zoneName;
@@ -70,6 +73,18 @@ public class IpChangeManagerTests
                         Data = "198.51.100.1"
                     }
                 ]);
+
+        public Task<Dynv6Zone> UpdateZoneAsync(long zoneId, Dynv6ZoneUpdateRequest request, CancellationToken cancellationToken)
+        {
+            LastUpdatedZoneIp = request.Ipv4Address;
+
+            return Task.FromResult(new Dynv6Zone
+            {
+                Id = zoneId,
+                Name = "example.com",
+                Ipv4Address = request.Ipv4Address
+            });
+        }
 
         public Task<Dynv6Record> UpdateRecordAsync(long zoneId, long recordId, Dynv6RecordUpdateRequest request, CancellationToken cancellationToken)
         {
